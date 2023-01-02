@@ -1,0 +1,4 @@
+#!/bin/sh
+
+gradle assemble || exit 1
+build/exe/main/debug/linux/x86-64/slicer $@

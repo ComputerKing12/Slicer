@@ -1,0 +1,43 @@
+plugins {
+    id 'cpp-application' // or 'cpp-library'
+}
+
+version = '1.2.1'
+
+tasks.withType(CppCompile).configureEach {
+    // Define a preprocessor macro for every binary
+    macros.put("NDEBUG", null)
+
+    // Define toolchain-specific compiler options
+    compilerArgs.addAll toolChain.map { toolChain ->
+        if (toolChain in [ Gcc, Clang ]) {
+            return ['-O2', '-fno-access-control']
+        } else if (toolChain in VisualCpp) {
+            return ['/Zi']
+        }
+        return []
+    }
+}
+
+application {
+	source.from file('src')
+    privateHeaders.from file('src/include')
+    privateHeaders.from file('thirdparty/include')
+    binaries.configureEach(CppStaticLibrary) {
+        // Define a preprocessor macro for every binary
+        compileTask.get().macros.put("NDEBUG", null)
+
+        // Define toolchain-specific compiler options
+        if (toolChain in [ Gcc, Clang ]) {
+            compileTask.get().compilerArgs.addAll(['-O2', '-fno-access-control'])
+        } else if (toolChain in VisualCpp) {
+            compileTask.get().compilerArgs.add('/Zi')
+        }
+    }
+
+	targetMachines = [
+        machines.linux.x86_64,
+        machines.windows.x86, machines.windows.x86_64,
+        machines.macOS.x86_64
+    ]
+}
